@@ -29,13 +29,15 @@ const getContainers = (req, res) => {
 
 const attachToContainer = (req, res) => {
   const id = req.params.id;
-  try {
-    logger.attachToContainer(id);
-    res.sendStatus(200);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send(`Could not attach to container: ${id}`);
-  }
+  logger
+    .attachToContainer(id)
+    .then(() => {
+      res.sendStatus(200);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send(err);
+    });
 };
 
 const detachFromContainer = (req, res) => {
@@ -59,8 +61,15 @@ const streamContainerLogs = (req, res) => {
   };
   res.writeHead(200, headers);
 
-  logsEmitter.on(`message-logged-${id}`, (doc) => {
-    res.write(JSON.stringify(doc));
+  const listener = (log) => {
+    res.write(JSON.stringify(log));
+  };
+
+  logsEmitter.on(`message-logged-${id}`, listener);
+
+  req.on("close", () => {
+    logsEmitter.removeListener(`message-logged-${id}`, listener);
+    res.end();
   });
 };
 

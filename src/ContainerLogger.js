@@ -6,27 +6,34 @@ const EventEmitter = require("events").EventEmitter;
 const Log = require("./models/log");
 
 class ContainerLogger extends EventEmitter {
-  constructor({ containerObj, containerId, loggerStrategy, storage, since }) {
+  constructor({ containerObj, containerId, loggerStrategy, storage }) {
     super();
     this.containerObj = containerObj;
     this.containerId = containerId;
     this.loggerStrategy = loggerStrategy;
     this.storage = storage;
-    this.since = since;
+    this.since = null;
   }
 
   start() {
-    (() => {
+    // TODO: Refactor to return a promise
+    new Promise((resolve, reject) => {
       if (!Object.values(LoggerStrategy).includes(this.loggerStrategy)) {
-        return new Promise.reject("No such strategy");
+        reject("No such strategy");
       }
 
-      if (this.loggerStrategy == LoggerStrategy.FROM_BEGGINING) {
-        console.log("handling from beginning");
-        return this._handleFromBeggining();
-      } else {
-      }
-    })()
+      this._getLatestTimestamp()
+        .then((timestamp) => {
+          console.log(timestamp);
+          this.since = timestamp + 1;
+        })
+        .finally(resolve);
+    })
+      .then(() => {
+        if (this.loggerStrategy == LoggerStrategy.FROM_BEGGINING) {
+          return this._handleFromBeggining();
+        }
+      })
       .then((stream) => {
         this._handleStream(stream);
 
@@ -66,7 +73,7 @@ class ContainerLogger extends EventEmitter {
 
   _handleStream(stream) {
     const outStream = new streams.PassThrough({
-      highWaterMark: 1024 * 1024,
+      // highWaterMark: 1024 * 1024,
     });
     const errStream = new streams.PassThrough();
 
@@ -102,6 +109,21 @@ class ContainerLogger extends EventEmitter {
           console.error("[Error] could not store to db: " + err.toString());
         });
     }
+  }
+
+  _getLatestTimestamp() {
+    return new Promise((resolve, reject) => {
+      this.storage
+        .getLastLogTimestamp(this.containerId)
+        .then((timestamp) => {
+          console.log("timestamp: ", timestamp);
+          resolve(timestamp);
+        })
+        .catch((err) => {
+          console.error(err);
+          reject("Could not retrieve last logged timestamp");
+        });
+    });
   }
 }
 

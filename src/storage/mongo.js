@@ -1,8 +1,8 @@
-"use strict";
 const mongoose = require("mongoose");
 const conf = require("../config");
 
-// connect to mongo
+const MONGOOSE_CONNECTED_STATE = 1;
+
 mongoose
   .connect(conf.DB_CONN_STR)
   .then(() => {
@@ -26,6 +26,11 @@ const logSchema = new mongoose.Schema(
     timestamps: { currentTime: () => Math.floor(Date.now() / 1000) },
   }
 );
+
+//const Log = mongoose.connection.readyState[MONGOOSE_CONNECTED_STATE]
+//? mongoose.model("Log")
+//: mongoose.model("Log", logSchema);
+
 const Log = mongoose.model("Log", logSchema);
 
 const containerSchema = new mongoose.Schema({
@@ -34,6 +39,10 @@ const containerSchema = new mongoose.Schema({
   names: { type: [String] },
 });
 const Container = mongoose.model("Container", containerSchema);
+
+//const Container = mongoose.connection.readyState[MONGOOSE_CONNECTED_STATE]
+//? mongoose.model("Container")
+//: mongoose.model("Container", containerSchema);
 
 module.exports.getContainers = () => {
   return new Promise((resolve, reject) => {
@@ -66,15 +75,13 @@ module.exports.getLastLogTimestamp = (containerId) => {
         if (err) {
           reject();
         }
-        resolve(log.createdAt + 1);
+        resolve(log ? log.createdAt : null);
       });
   });
 };
 
 module.exports.getLogs = (containerId) => {
   return new Promise((resolve, reject) => {
-    // setQueryTimeout(reject, 3000);
-
     Log.find({ containerId })
       .wtimeout(5000)
       .exec((err, logs) => {

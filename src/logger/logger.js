@@ -9,22 +9,21 @@ class Logger {
     this.includeExistingContainers = includeExistingContainers;
     this.loggerLabel = loggerLabel;
     this.storage = storage;
-    this.allContainers = [];
+    this.loggedContainers = [];
     this.docker = new Docker({ socketPath: "/var/run/docker.sock" });
   }
 
-  validate() {}
-
-  start() {
+  validate() {
     if (!this.loggerLabel) {
       return new Error("[Error] logger label is missing!");
     }
+  }
 
+  start() {
     this.storage
       .getContainers()
       .then((containers) => {
-        this.allContainers = containers.map((container) => container.id);
-        console.log("all:", this.allContainers);
+        this.loggedContainers = containers.map((container) => container.id);
 
         console.log(
           `Logging containers created for logger with label: ${this.loggerLabel}, `,
@@ -34,42 +33,56 @@ class Logger {
       })
       .catch((err) => {
         console.error(err);
-        return;
+        throw new Error(
+          `Could not retrieve containers for logger with label: , ${this.loggerLabel}`
+        );
       });
 
     this._listenForNewContainers();
   }
 
-  async attachToContainer(containerId) {
-    if (this.attachedContainerLoggers[containerId]) {
-      throw new Error(`Container with id ${containerId} is already handled`);
-    }
-
-    // TODO: Handle attaching to a container which was already attached.
-    let lastLoggedAt = null;
-    if (this.allContainers.includes(containerId)) {
-      try {
-        lastLoggedAt = await this.storage.getLastLogTimestamp(containerId);
-        console.log("Last time logged: ", lastLoggedAt);
-      } catch (err) {
-        // Or maybe the server is up and not producing any logs???!
-        console.error(err);
-        throw new Error("Something is wrong");
-      }
-    }
-
+  _checkContainerExists(containerId) {
     const containerObj = this.docker.getContainer(containerId);
-    const loggerStrategy = LoggerStrategy.FROM_BEGGINING;
-    const containerLogger = new ContainerLogger({
-      containerObj,
-      containerId,
-      loggerStrategy,
-      storage: this.storage,
-      since: lastLoggedAt,
+    return new Promise((resolve, reject) => {
+      containerObj
+        .inspect()
+        .then(() => {
+          resolve(containerObj);
+        })
+        .catch((err) => {
+          reject(err);
+        });
     });
-    // console.log(this.attachedContainerLoggers);
-    this.attachedContainerLoggers[containerId] = containerLogger;
-    containerLogger.start();
+  }
+
+  //_checkLastLogged(containerId) {}
+
+  attachToContainer(containerId) {
+    return new Promise((resolve, reject) => {
+      if (this.attachedContainerLoggers[containerId]) {
+        reject(`Container with id ${containerId} is already handled`);
+      }
+
+      //// TODO: Handle attaching to a container which was already attached.
+      this._checkContainerExists(containerId)
+        .then((containerObj) => {
+          // Inspect for label in container
+          const loggerStrategy = LoggerStrategy.FROM_BEGGINING;
+          const containerLogger = new ContainerLogger({
+            containerObj,
+            containerId,
+            loggerStrategy,
+            storage: this.storage,
+          });
+          this.attachedContainerLoggers[containerId] = containerLogger;
+          containerLogger.start();
+          resolve();
+        })
+        .catch((err) => {
+          console.error(err);
+          reject(err);
+        });
+    });
   }
 
   detachFromContainer(containerId) {
@@ -83,6 +96,10 @@ class Logger {
 
   _listenForExistingContainers() {
     this.docker.listContainers((err, result) => {
+      if (err) {
+        console.error(err);
+        throw new Error("Could not get existing containers");
+      }
       console.log(`Found ${result.length} existing containers`);
       result.forEach(this._handleContainer.bind(this));
     });
@@ -102,10 +119,12 @@ class Logger {
       ? container.Labels["com.example.logger.label"]
       : container.Actor.Attributes["com.example.logger.label"];
 
-    //if (!this._isLogged(containerId) && this.includeExistingContainers) {
-    //console.log(`Container with id ${containerId} won't be handled`);
-    //return;
-    //}
+    // Separate validation to to function
+    if (!this._isLogged(containerId) && !this.includeExistingContainers) {
+      console.log(`Container with id ${containerId} shouldn't be handled`);
+      return;
+    }
+
     if (
       this.attachedContainerLoggers[containerId] &&
       this._isLogged(containerId)
@@ -122,11 +141,14 @@ class Logger {
     }
 
     console.log("Handling container: " + containerId);
-    this.attachToContainer(containerId);
+    this.attachToContainer(containerId).catch((err) => {
+      console.error(err);
+      return;
+    });
   }
 
   _isLogged(containerId) {
-    return this.allContainers.includes(containerId);
+    return this.loggedContainers.includes(containerId);
   }
 }
 

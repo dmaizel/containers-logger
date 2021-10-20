@@ -4,7 +4,6 @@ const API_URL = require("../api");
 function attach(containerId) {
   const ATTACH_ENDPOINT = `/api/container/${containerId}/logs`;
 
-  console.log(`${API_URL}${ATTACH_ENDPOINT}`);
   axios
     .post(`${API_URL}${ATTACH_ENDPOINT}`)
     .then(() => {

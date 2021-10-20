@@ -7,9 +7,16 @@ function containers() {
   axios
     .get(`${API_URL}${CONTAINERS_ENDPOINT}`)
     .then((containers) => {
-      containers.data.forEach((container) => {
-        console.log(container);
-      });
+      containers = containers.data;
+      console.table(
+        containers.map((container) => {
+          return {
+            id: container.id,
+            image: container.image,
+            names: container.names,
+          };
+        })
+      );
     })
     .catch((err) => {
       console.error(err);

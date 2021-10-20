@@ -69,11 +69,15 @@ This will print all the options available.
 ```bash
 npm i -g
 ```
-and then use it: ```containers-logger --help```
+and then use it: 
+```bash
+containers-logger --help
+```
 
 <br>
+<br>
 
-```text
-If at any point of time the server will go down, it will get all the missed logs
+```
+If at any point of time the server will go down, it will get all the missed logs 
 and update the DB.
 ```

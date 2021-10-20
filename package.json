@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
+  "bin": {
+    "containers-logger": "cli/index.js"
+  },
   "scripts": {
     "start": "node src/app.js"
   },

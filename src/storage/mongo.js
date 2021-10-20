@@ -1,8 +1,6 @@
 const mongoose = require("mongoose");
 const conf = require("../config");
 
-const MONGOOSE_CONNECTED_STATE = 1;
-
 mongoose
   .connect(conf.DB_CONN_STR)
   .then(() => {
@@ -26,11 +24,6 @@ const logSchema = new mongoose.Schema(
     timestamps: { currentTime: () => Math.floor(Date.now() / 1000) },
   }
 );
-
-//const Log = mongoose.connection.readyState[MONGOOSE_CONNECTED_STATE]
-//? mongoose.model("Log")
-//: mongoose.model("Log", logSchema);
-
 const Log = mongoose.model("Log", logSchema);
 
 const containerSchema = new mongoose.Schema({
@@ -40,20 +33,14 @@ const containerSchema = new mongoose.Schema({
 });
 const Container = mongoose.model("Container", containerSchema);
 
-//const Container = mongoose.connection.readyState[MONGOOSE_CONNECTED_STATE]
-//? mongoose.model("Container")
-//: mongoose.model("Container", containerSchema);
-
 module.exports.getContainers = () => {
   return new Promise((resolve, reject) => {
-    Container.find({})
-      .wtimeout(5000)
-      .exec((err, containers) => {
-        if (err) {
-          reject();
-        }
-        resolve(containers);
-      });
+    Container.find({}).exec((err, containers) => {
+      if (err) {
+        reject();
+      }
+      resolve(containers);
+    });
   });
 };
 
@@ -84,7 +71,6 @@ module.exports.getLogs = (containerId) => {
   return new Promise((resolve, reject) => {
     Log.find({ containerId })
       .sort({ _id: 1 })
-      .wtimeout(5000)
       .exec((err, logs) => {
         if (err) {
           reject(err);

@@ -1,10 +1,7 @@
 const Docker = require("dockerode");
 const DockerEvents = require("docker-events");
 const ContainerLogger = require("../ContainerLogger");
-const { LoggerStrategy } = require("../enums");
-
-// debug
-const fs = require("fs");
+const config = require("../config");
 
 class Logger {
   constructor({ loggerLabel, storage, includeExistingContainers }) {
@@ -13,15 +10,7 @@ class Logger {
     this.loggerLabel = loggerLabel;
     this.storage = storage;
     this.loggedContainers = [];
-    console.log("here1");
-    let socket = "/var/run/docker.sock";
-    this.docker = new Docker({ socketPath: socket });
-    var stats = fs.statSync(socket);
-
-    if (!stats.isSocket()) {
-      throw new Error("Are you sure the docker is running?");
-    }
-    console.log("here2");
+    this.docker = new Docker({ socketPath: "/var/run/docker.sock" });
   }
 
   validate() {
@@ -78,7 +67,7 @@ class Logger {
       this._checkContainerExists(containerId)
         .then((containerObj) => {
           // Inspect for label in container
-          const loggerStrategy = LoggerStrategy.FROM_BEGGINING;
+          const loggerStrategy = config.LOGGER_STRATEGY;
           const containerLogger = new ContainerLogger({
             containerObj,
             containerId,

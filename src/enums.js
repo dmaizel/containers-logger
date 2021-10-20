@@ -1,8 +1,5 @@
 const LoggerStrategy = {
-  ON_ATTACH: "on_attach",
-  FROM_BEGGINING: "from_beggining",
+  LOGS: "logs",
 };
 
-module.exports = {
-  LoggerStrategy,
-};
+module.exports = LoggerStrategy;

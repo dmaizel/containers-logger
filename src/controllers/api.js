@@ -8,10 +8,14 @@ const getContainerLogs = (req, res) => {
   storage
     .getLogs(id)
     .then((logs) => {
-      res.send(logs);
+      if (logs.length === 0) {
+        res.status(400).send(`No logs found for container ${id}`);
+      }
+      res.status(200).send(logs);
     })
     .catch((err) => {
       console.error(err);
+      res.status(400).send(`Couldn't find logs for container ${id}`);
     });
 };
 

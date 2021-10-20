@@ -1,4 +1,4 @@
-const { LoggerStrategy } = require("./enums");
+const LoggerStrategy = require("./enums");
 const streams = require("stream");
 const { logsEmitter } = require("./utils");
 const EventEmitter = require("events").EventEmitter;
@@ -16,10 +16,9 @@ class ContainerLogger extends EventEmitter {
   }
 
   start() {
-    // TODO: Refactor to return a promise
     new Promise((resolve, reject) => {
       if (!Object.values(LoggerStrategy).includes(this.loggerStrategy)) {
-        reject("No such strategy");
+        reject("No such strategy: ", this.loggerStrategy);
       }
 
       this._getLatestTimestamp()
@@ -30,7 +29,7 @@ class ContainerLogger extends EventEmitter {
         .finally(resolve);
     })
       .then(() => {
-        if (this.loggerStrategy == LoggerStrategy.FROM_BEGGINING) {
+        if (this.loggerStrategy == LoggerStrategy.LOGS) {
           return this._handleFromBeggining();
         }
       })
@@ -116,7 +115,6 @@ class ContainerLogger extends EventEmitter {
       this.storage
         .getLastLogTimestamp(this.containerId)
         .then((timestamp) => {
-          console.log("timestamp: ", timestamp);
           resolve(timestamp);
         })
         .catch((err) => {

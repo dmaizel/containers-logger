@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const logs = require("./commands/logs");
-const { Option, Command } = require("commander");
+const { Command } = require("commander");
 const containers = require("./commands/containers");
 const attach = require("./commands/attach");
 const detach = require("./commands/detach");
@@ -35,5 +35,4 @@ program
   .argument("<containerId>", "The ID of the container to detach from")
   .action(detach);
 
-//.option("-A, --all", "List all logs of all containers")
 program.parse();

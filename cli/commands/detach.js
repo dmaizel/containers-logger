@@ -1,10 +1,11 @@
 const axios = require("axios");
+const API_URL = require("../api");
 
 function detach(containerId) {
-  let detachEndpoint = `/api/container/${containerId}/logs`;
+  let DETACH_ENDPOINT = `/api/container/${containerId}/logs`;
 
   axios
-    .delete(`http://localhost:8888${detachEndpoint}`)
+    .delete(`${API_URL}${DETACH_ENDPOINT}`)
     .then(() => {
       console.log("Detached from container with id: ", containerId);
     })

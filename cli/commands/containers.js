@@ -1,10 +1,11 @@
+const API_URL = require("../api");
 const axios = require("axios");
 
 function containers() {
-  let containersEndpoint = `/api/containers`;
+  const CONTAINERS_ENDPOINT = `/api/containers`;
 
   axios
-    .get(`http://localhost:8888${containersEndpoint}`)
+    .get(`${API_URL}${CONTAINERS_ENDPOINT}`)
     .then((containers) => {
       containers.data.forEach((container) => {
         console.log(container);

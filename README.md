@@ -53,8 +53,27 @@ LABEL "com.example.logger.label"=<The label of your containers-logger service>
 ```
 
 <br>
-<br>
 
 
 # CLI Tool
+* To use the CLI tool just install the dependencies
+```bash
+npm install
+```
+* And use it via:
+```bash
+node cli/index.js
+```
+This will print all the options available.
+* If you want to use it as a binary you'll need to run:
+```bash
+npm i -g
+```
+and then use it: ```containers-logger --help```
+
 <br>
+
+```text
+If at any point of time the server will go down, it will get all the missed logs
+and update the DB.
+```

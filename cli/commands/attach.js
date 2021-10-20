@@ -1,10 +1,12 @@
 const axios = require("axios");
+const API_URL = require("../api");
 
 function attach(containerId) {
-  let attachEndpoint = `/api/container/${containerId}/logs`;
+  const ATTACH_ENDPOINT = `/api/container/${containerId}/logs`;
 
+  console.log(`${API_URL}${ATTACH_ENDPOINT}`);
   axios
-    .post(`http://localhost:8888${attachEndpoint}`)
+    .post(`${API_URL}${ATTACH_ENDPOINT}`)
     .then(() => {
       console.log("Attached to container with id: ", containerId);
     })

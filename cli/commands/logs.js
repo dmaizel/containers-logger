@@ -1,28 +1,30 @@
 const http = require("http");
 const chalk = require("chalk");
 const axios = require("axios");
+const API_URL = require("../api");
+const config = require("../../src/config");
 const { format_time } = require("../utils");
 
 function logs(containerId, { follow }) {
-  let logsEndpoint = `/api/container/${containerId}/logs`;
+  let LOGS_ENDPOINT = `/api/container/${containerId}/logs`;
+
   if (follow) {
-    handleLogsStream(logsEndpoint);
+    handleLogsStream(LOGS_ENDPOINT);
   } else {
     axios
-      .get(`http://localhost:8888${logsEndpoint}`)
+      .get(`${API_URL}${LOGS_ENDPOINT}`)
       .then((logs) => {
         logs.data.forEach((log) => {
           printLogLine(log);
         });
       })
       .catch((err) => {
-        console.error(err);
+        console.error(err.response.data);
       });
   }
 }
 
 const printLogLine = ({ createdAt, source, log }) => {
-  // let toPrint = `[${new Date(createdAt * 1000).toISOString()}] `;
   let toPrint = `[${format_time(createdAt)}] `;
   if (source == "stdout") {
     toPrint += chalk.greenBright(log);
@@ -38,8 +40,8 @@ const handleLogsStream = (logsEndpoint) => {
       {
         agent: false,
         path: `${logsEndpoint}/stream`,
-        hostname: "localhost",
-        port: 8889,
+        hostname: config.HOST,
+        port: config.PORT,
       },
       (res) =>
         res.on("data", (data) => {

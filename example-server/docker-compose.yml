@@ -1,9 +1,0 @@
-version: "3.9"
-services:
-  app:
-    container_name: app
-    volumes:
-      - "/var/run:/var/run"
-    build: .
-    ports:
-      - "8888:8888"

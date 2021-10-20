@@ -3,6 +3,9 @@ const DockerEvents = require("docker-events");
 const ContainerLogger = require("../ContainerLogger");
 const { LoggerStrategy } = require("../enums");
 
+// debug
+const fs = require("fs");
+
 class Logger {
   constructor({ loggerLabel, storage, includeExistingContainers }) {
     this.attachedContainerLoggers = {};
@@ -10,7 +13,15 @@ class Logger {
     this.loggerLabel = loggerLabel;
     this.storage = storage;
     this.loggedContainers = [];
-    this.docker = new Docker({ socketPath: "/var/run/docker.sock" });
+    console.log("here1");
+    let socket = "/var/run/docker.sock";
+    this.docker = new Docker({ socketPath: socket });
+    var stats = fs.statSync(socket);
+
+    if (!stats.isSocket()) {
+      throw new Error("Are you sure the docker is running?");
+    }
+    console.log("here2");
   }
 
   validate() {
@@ -108,6 +119,9 @@ class Logger {
   _listenForNewContainers() {
     const dockerEventsEmitter = new DockerEvents({ docker: this.docker });
     dockerEventsEmitter.start();
+    dockerEventsEmitter.on("error", (err) => {
+      console.error(err);
+    });
     dockerEventsEmitter.on("start", this._handleContainer.bind(this));
 
     console.log("Started listening for new containers");

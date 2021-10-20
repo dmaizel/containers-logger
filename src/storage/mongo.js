@@ -83,6 +83,7 @@ module.exports.getLastLogTimestamp = (containerId) => {
 module.exports.getLogs = (containerId) => {
   return new Promise((resolve, reject) => {
     Log.find({ containerId })
+      .sort({ _id: 1 })
       .wtimeout(5000)
       .exec((err, logs) => {
         if (err) {
